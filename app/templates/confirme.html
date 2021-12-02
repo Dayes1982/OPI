@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block content %}
+<table width="100%" border="0" cellspacing="70" cellpadding="0">
+	<tbody>
+        <tr>
+		    <td width="100%">
+				<table border="0" cellspacing="0" cellpadding="0" width="100%" height="100%" align="center">
+                    <tbody>
+                        <tr>
+                            <td colspan="4">
+                                &nbsp;
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align="center">
+                                <table border="0" cellpadding="0" cellspacing="0" align="center" class="marcoavisos">
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="4">
+                                                &nbsp;
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="4" align="center">
+                                                <b><u>Aviso</u></b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="4">
+                                                &nbsp;
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>&nbsp;</td>
+                                            <td><img src="{{ url_for('static', filename='images/advertencia.gif') }}"></td>
+                                            <td align="left">
+                                                <table cellpadding="10" cellspacing="5">
+                                                    <tbody>
+                                                        <tr>
+                                                            Su solicitud de acceso a la aplicación ha sido registrada.<br>
+                                                            Espere a que su usuario sea activado.
+                                                        <tr>
+                                                            <td><br><br></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>		              
+                                            </td>
+                                            <td>&nbsp;</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+		    </td>
+	    </tr>
+    </tbody>
+</table>
+{% endblock %}

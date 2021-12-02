@@ -1,0 +1,114 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+<script>
+    let cat = [];
+    let sub = [];
+    {% for sub in subcategorias %}
+        cat.push("{{ sub[0] }}");
+        sub.push("{{ sub[1] }}");
+    {% endfor %}
+</script>
+
+<ul class="nav nav-tabs">
+    <li>
+        <a href="/admin/archivo/">Lista</a>
+    </li>
+    <li class="active">
+        <a href="javascript:void(0)">Crear</a>
+    </li>
+</ul>
+<form action="" method="POST" class="admin-form form-horizontal" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    {% if mensaje != "" %}
+        <p style="color:blue;">{{ mensaje }}</p> 
+    {% endif %}
+    {% for error in form.categoria.errors %}
+        <p style="color:red;">{{ error }}</p>  
+    {% endfor %}
+    {% for error in form.subcategoria.errors %}
+        <p style="color:red;">Subcategoria: {{ error }}</p>  
+    {% endfor %}
+    {% for error in form.anio.errors %}
+        <p style="color:red;">{{ error }}</p> 
+    {% endfor %}
+    {% for error in form.nombre.errors %}
+        <p style="color:red;">{{ error }}</p> 
+    {% endfor %}
+    <fieldset>
+        <div class="control-group">
+            <div class="control-label">
+                <label for="nombre">{{ form.categoria.label }}
+                </label>
+            </div>
+            <div class="controls">
+                <div>
+                    {{ form.categoria(**{"onchange":"actualizaSubcategoria()"}) }}
+                </div>
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="control-label">
+                <label for="nombre">{{ form.subcategoria.label }}
+                </label>
+            </div>
+            <div class="controls">
+                <div>
+                    {{ form.subcategoria }}
+                </div>
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="control-label">
+                <label for="nombre">{{ form.anio.label }}
+                </label>
+            </div>
+            <div class="controls">
+                <div>
+                    {{ form.anio }}
+                </div>
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="control-label">
+                <label for="nombre">{{ form.nombre.label }}
+                </label>
+            </div>
+            <div class="controls">
+                <div>
+                    {{ form.nombre }}
+                </div>
+            </div>
+        </div>
+        <hr>
+        <div class="control-group">
+            <div class="controls">
+                <input type="submit" class="btn btn-primary" value="Salvar">
+                <a href="/admin/archivo/" class="btn btn-danger">Cancelar</a>
+            </div>
+        </div>        
+    </fieldset>
+</form>
+
+<script>
+    function actualizaSubcategoria() {
+        const select = document.getElementById('categoria');
+        const seleccion = select.options[select.selectedIndex].text
+        var sel = document.getElementById('subcategoria');
+        for (i = sel.length - 1; i >= 0; i--) {
+            sel.remove(i);
+        }
+        console.log("Seleccionado " + seleccion);
+        cat.forEach(function(elemento, indice, array) {
+            if (elemento == seleccion){
+                console.log(sub[indice]);
+                var opt = document.createElement('option');
+                opt.value = sub[indice];
+                opt.innerHTML = sub[indice];
+                sel.appendChild(opt);
+            }
+        })
+    }
+</script>
+
+
+{% endblock %}
