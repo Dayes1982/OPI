@@ -192,6 +192,7 @@ def login():
         user = Usuarios.query.filter_by(nombre=form.nombre.data).first()
         if user is not None and user.check_password(form.password.data):
             login_user(user)
+            app.logger.info('Ha accedido %s', user.nombre)
             next_page = request.args.get('next')
             if not next_page or url_parse(next_page).netloc != '':
                 next_page = url_for('index')
@@ -259,11 +260,12 @@ def menu():
         # Servir archivo
         #archivo = Archivo.query.filter_by(mes=form.mes.data, anio=form.anio.data, categoria=form.categoria.data,subcategoria=form.subcategoria.data).first()
         archivo = Archivo.query.filter_by(anio=form.anio.data, categoria=form.categoria.data,subcategoria=form.subcategoria.data).first()
-        print(archivo)
         if archivo is None:
+            app.logger.error('El usuario %s no ha podido descargar %s de %s del año %s', current_user.nombre,form.categoria.data,form.subcategoria.data,form.anio.data)
             mensaje="El archivo no existe"
             return render_template("menu.html", title='Home Page', material=material, software=software,permisoCat=permisoCat, form=form, mensaje=mensaje)
         else:
+            app.logger.info('El usuario %s descarga %s de %s del año %s', current_user.nombre,form.categoria.data,form.subcategoria.data,form.anio.data)
             file_path = os.path.join(DATA_DIR, archivo.nombre)
             return send_file(file_path)
     return render_template("menu.html", title='Home Page', material=material, software=software,permisoCat=permisoCat, form=form)

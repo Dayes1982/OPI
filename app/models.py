@@ -90,3 +90,4 @@ class Permisos(db.Model):
 	Categoria = db.Column(db.Integer, db.ForeignKey('categoria.id'))
 	def __repr__(self):
 		return '<Usuario Categoria {}>'.format(self.id)
+

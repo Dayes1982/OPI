@@ -4,11 +4,31 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager, current_user
 from flask_admin import Admin, AdminIndexView, expose
+from logging.config import dictConfig
 
-# export FLASK_ENV=development
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '%(levelname)s [%(asctime)s] %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    },'archivo': {
+        'class' : 'logging.handlers.RotatingFileHandler',
+        'formatter': 'default',
+        'filename' : 'OPI.log',
+        'maxBytes': 5000000,
+        'backupCount': 10
+        }
+    },
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi','archivo']
+    }
+})
 
-# pip3 install gunicorn Flask
-# gunicorn --workers=2 --bind=0.0.0.0:8000 app:app 
 app = Flask(__name__)
 app.config.update(dict(
     DEBUG = True,
