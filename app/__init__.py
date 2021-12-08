@@ -24,7 +24,6 @@ dictConfig({
         }
     },
     'root': {
-        'level': 'INFO',
         'handlers': ['wsgi','archivo']
     }
 })
@@ -49,8 +48,8 @@ class MyView(AdminIndexView):
             return self.render('admin/index.html')
 
 admin = Admin(app,name='OPI RRHH',index_view=MyView())
-
+app.logger.info('Iniciado el sistema')
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=3000, debug=True)
+    app.run(host='0.0.0.0', port=3000, debug=False)
 
 from app import views, models, errors

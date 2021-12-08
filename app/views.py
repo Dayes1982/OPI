@@ -6,14 +6,14 @@ from app import app, db, admin
 from .forms import LoginForm
 from flask_login import current_user, login_user, logout_user, login_required
 from functools import wraps
-from app.models import Usuarios, Software, Material, Archivo, Categoria, Subcategoria, Anio, Permisos #, Mes
+from app.models import Usuarios, Software, Material, Archivo, Categoria, Subcategoria, Anio, Permisos
 from sqlalchemy import asc, desc
 from werkzeug.urls import url_parse
 from app.forms import RegistrationForm, SoftwareForm, ArchivosForm, SubcategoriaForm, PermisosForm, DescargaArchivosForm
 from flask_admin.contrib.sqla import ModelView
-from flask_admin import expose
 from werkzeug.utils import secure_filename
 from flask_admin.menu import MenuLink
+from flask_admin import BaseView, expose
 
 
 # Manejo de archivos
@@ -99,12 +99,10 @@ class SubcategoriaView(ModelView):
 class ArchivosView(ModelView):
     can_edit = False
     column_searchable_list = ['nombre']
-    #column_list = ('categoria','subcategoria','anio','mes','nombre')
     column_list = ('categoria','subcategoria','anio','nombre')
     @expose('/new/', methods=('GET', 'POST'))
     def create_view(self):
         form = ArchivosForm()
-        #form.mes.choices = [(g.numero, g.nombre) for g in Mes.query.order_by(Mes.numero.asc())]
         form.anio.choices = [(str(g.numero)) for g in Anio.query.order_by(Anio.numero.desc())]
         form.categoria.choices = [(g.nombre) for g in Categoria.query.order_by(Categoria.nombre.asc())]
         form.categoria.choices.insert(0,(""))
@@ -112,7 +110,6 @@ class ArchivosView(ModelView):
         form.subcategoria.choices.insert(0,(""))
         subcategorias = [(g.categoria , g.nombre) for g in Subcategoria.query.order_by(Subcategoria.nombre.asc())]
         if form.validate_on_submit():
-            #soft = Archivo(categoria=form.categoria.data, subcategoria=form.subcategoria.data, mes=form.mes.data,anio=form.anio.data)
             soft = Archivo(categoria=form.categoria.data, subcategoria=form.subcategoria.data, anio=form.anio.data)
             file = request.files['nombre']
             soft.nombre = secure_filename(file.filename)
@@ -124,11 +121,10 @@ class ArchivosView(ModelView):
             os.makedirs(DATA_DIR, exist_ok=True)
             file_path = os.path.join(DATA_DIR, soft.nombre)
             file.save(file_path)
-
             form.categoria.data = ""
             form.subcategoria.data = ""
-            #form.mes.data = ""
             form.anio.data = ""
+            app.logger.info('%s ha subido %s', current_user.nombre,file)
             return self.render('admin/templates/create_files.html',form=form, subcategorias=subcategorias,mensaje="Archivo dado de alta correctamente.")
         return self.render('admin/templates/create_files.html',subcategorias=subcategorias,form=form)
     
@@ -138,6 +134,7 @@ class ArchivosView(ModelView):
             os.remove(os.path.join(DATA_DIR, model.nombre))
             self.session.flush()
             self.session.delete(model)
+            app.logger.info('%s ha eliminado %s', current_user.nombre,model.nombre)
             self.session.commit()
         except Exception:
             self.session.rollback()
@@ -159,17 +156,36 @@ class PermisosView(ModelView):
             per = Permisos(Usuario=form.nombreUser.data, Categoria=form.nomCategoria.data)
             db.session.add(per)
             db.session.commit()
+            app.logger.info('%s da permiso a %s a la Categoria %s', current_user.nombre,form.nombreUser.data,form.nomCategoria.data)
             return self.render('admin/templates/permisos.html',form=form, mensaje="Permiso: " + form.nombreUser.data + " a " + form.nomCategoria.data + " concedido correctamente.")
         return self.render('admin/templates/permisos.html',form=form)
 
+class LogView(BaseView):
+    @expose('/')
+    def index(self):
+        s = []
+        try:
+            with open('OPI.log', 'r') as f:
+                lines = f.readlines()
+                lastlines = lines[-200:]
+                for line in lastlines:
+                    s.append(line)
+                f.close()
+        except FileNotFoundError as e:
+            s.append("No hay log.")
+        except IOError as e:
+            s.append("No se puede leer el log.")  
+        return self.render('admin/templates/log.html', log=s)
+
 admin.add_view(MyModelViewUsuarios(Usuarios, db.session))
+admin.add_view(PermisosView(Permisos, db.session))
+admin.add_view(AnioView(Anio, db.session , category="Calamar"))
+admin.add_view(CategoriaView(Categoria, db.session, category="Calamar"))
+admin.add_view(SubcategoriaView(Subcategoria, db.session, category="Calamar"))
+admin.add_view(ArchivosView(Archivo, db.session, category="Calamar"))
 admin.add_view(MyModelViewSoftware(Software, db.session))
 admin.add_view(MyModelViewMaterial(Material, db.session))
-admin.add_view(AnioView(Anio, db.session))
-admin.add_view(CategoriaView(Categoria, db.session))
-admin.add_view(SubcategoriaView(Subcategoria, db.session))
-admin.add_view(PermisosView(Permisos, db.session))
-admin.add_view(ArchivosView(Archivo, db.session))
+admin.add_view(LogView(name='Log', endpoint='log'))
 admin.add_link(MenuLink(name='Salir Administración', url='/'))
 
 
@@ -201,6 +217,7 @@ def login():
 
 @app.route('/logout')
 def logout():
+    app.logger.info('%s cierra sesion', current_user.nombre)
     logout_user()
     return redirect(url_for('login'))
 
@@ -215,6 +232,7 @@ def register():
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
+        app.logger.info('Se intenta dar de alta el usuario %s', form.nombre.data)
         return render_template('confirme.html')
     return render_template('register.html', title='Register', form=form)
 
@@ -241,7 +259,6 @@ def confirme():
 def menu():
     # Permisos para los archivos.
     if current_user.accesoMaterial == True:
-        #material = Material.query.order_by(Material.tip_Usuario).all()
         material = Material.query.filter_by(tip_Usuario=current_user.nombre).all()
     else:
         material = ""
@@ -251,14 +268,12 @@ def menu():
         software=""
     permisoCat = Permisos.query.filter_by(Usuario=current_user.nombre).all()
     form = DescargaArchivosForm()
-    #form.mes.choices = [(g.numero, g.nombre) for g in Mes.query.order_by(Mes.numero.asc())]
     form.anio.choices = [(str(g.numero)) for g in Anio.query.order_by(Anio.numero.desc())]
     form.categoria.choices = [(g.Categoria) for g in Permisos.query.filter_by(Usuario=current_user.nombre).order_by(Permisos.Categoria.asc())]
     if len(form.categoria.choices) > 0:
         form.subcategoria.choices = [(g.nombre) for g in Subcategoria.query.filter_by(categoria=form.categoria.choices[0]).order_by(Subcategoria.nombre.asc())]
     if form.validate_on_submit():
         # Servir archivo
-        #archivo = Archivo.query.filter_by(mes=form.mes.data, anio=form.anio.data, categoria=form.categoria.data,subcategoria=form.subcategoria.data).first()
         archivo = Archivo.query.filter_by(anio=form.anio.data, categoria=form.categoria.data,subcategoria=form.subcategoria.data).first()
         if archivo is None:
             app.logger.error('El usuario %s no ha podido descargar %s de %s del año %s', current_user.nombre,form.categoria.data,form.subcategoria.data,form.anio.data)
