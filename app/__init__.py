@@ -30,7 +30,7 @@ dictConfig({
 
 app = Flask(__name__)
 app.config.update(dict(
-    DEBUG = True,
+    DEBUG = False,
 ))
 
 app.config.from_object(Config)
